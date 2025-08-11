@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Temperature Converter</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+    body {
+      font-family: 'Roboto', Arial, sans-serif;
+      background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    /* Notation symbols animation */
+    .notation-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .container {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(44, 62, 80, 0.15);
+      padding: 32px 40px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+      z-index: 1;
+      position: relative;
+    }
+    h2 {
+      color: #2d3e50;
+      margin-bottom: 24px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+    label {
+      display: block;
+      margin: 16px 0 8px 0;
+      color: #34495e;
+      font-weight: 500;
+      text-align: left;
+    }
+    input[type="text"], select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #bfc9d1;
+      border-radius: 8px;
+      font-size: 1rem;
+      margin-bottom: 12px;
+      transition: border-color 0.2s;
+    }
+    input[type="text"]:focus, select:focus {
+      border-color: #5dade2;
+      outline: none;
+    }
+    button {
+      background: linear-gradient(90deg, #5dade2 0%, #48c6ef 100%);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 32px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 12px;
+      box-shadow: 0 2px 8px rgba(44, 62, 80, 0.08);
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: linear-gradient(90deg, #48c6ef 0%, #5dade2 100%);
+    }
+    #result {
+      margin-top: 24px;
+      font-weight: 700;
+      font-size: 1.2rem;
+      color: #27ae60;
+      min-height: 32px;
+      background: #f4f8fb;
+      border-radius: 8px;
+      padding: 12px;
+      box-shadow: 0 1px 4px rgba(44, 62, 80, 0.05);
+    }
+    .unit-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .unit-row label {
+      margin: 0;
+      flex: 1;
+      text-align: center;
+    }
+    @media (max-width: 500px) {
+      .container {
+        padding: 20px 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas class="notation-canvas"></canvas>
+  <div class="container">
+    <h2>Temperature Converter</h2>
+    <label for="tempInput">Enter temperature:</label>
+    <input type="text" id="tempInput" placeholder="e.g. 32">
+    <div class="unit-row">
+      <label for="unitSelect">From:</label>
+      <select id="unitSelect">
+        <option value="C">Celsius</option>
+        <option value="F">Fahrenheit</option>
+        <option value="K">Kelvin</option>
+      </select>
+      <label for="targetSelect">To:</label>
+      <select id="targetSelect">
+        <option value="C">Celsius</option>
+        <option value="F">Fahrenheit</option>
+        <option value="K">Kelvin</option>
+      </select>
+    </div>
+    <button onclick="convertTemp()">Convert</button>
+    <div id="result"></div>
+  </div>
+  
+  <script>
+    function convertTemp() {
+      const input = document.getElementById('tempInput').value.trim();
+      const from = document.getElementById('unitSelect').value;
+      const to = document.getElementById('targetSelect').value;
+      const resultDiv = document.getElementById('result');
+
+      // Validate input
+      if (input === '' || isNaN(input)) {
+        resultDiv.textContent = "Please enter a valid number.";
+        resultDiv.style.color = "#e74c3c";
+        return;
+      }
+      const temp = parseFloat(input);
+
+      let tempInC;
+      // Convert input to Celsius first
+      if (from === 'C') tempInC = temp;
+      else if (from === 'F') tempInC = (temp - 32) * 5/9;
+      else if (from === 'K') tempInC = temp - 273.15;
+
+      let converted;
+      // Convert Celsius to target unit
+      if (to === 'C') converted = tempInC;
+      else if (to === 'F') converted = tempInC * 9/5 + 32;
+      else if (to === 'K') converted = tempInC + 273.15;
+
+      // Round to 2 decimal places
+      converted = Math.round(converted * 100) / 100;
+
+      // Display result with unit name
+      let unitName = to === 'C' ? 'Celsius (°C)' : to === 'F' ? 'Fahrenheit (°F)' : 'Kelvin (K)';
+      resultDiv.textContent = `${converted} ${unitName}`;
+      resultDiv.style.color = "#27ae60";
+    }
+
+    // Notation symbols animation
+    const canvas = document.querySelector('.notation-canvas');
+    const ctx = canvas.getContext('2d');
+    const symbols = ["°C", "°F", "K", "Δ", "≈", "≠", "≤", "≥", "+", "-", "×", "÷"];
+    let floatingSymbols = [];
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function createSymbol() {
+      const text = symbols[Math.floor(Math.random() * symbols.length)];
+      const fontSize = Math.random() * 32 + 24;
+      return {
+        text,
+        x: Math.random() * canvas.width,
+        y: canvas.height + Math.random() * 100,
+        speed: Math.random() * 0.7 + 0.3,
+        fontSize,
+        opacity: Math.random() * 0.3 + 0.2,
+        color: `rgba(44,62,80,${Math.random() * 0.3 + 0.2})`,
+        angle: Math.random() * 2 * Math.PI,
+        rotateSpeed: (Math.random() - 0.5) * 0.01
+      };
+    }
+
+    function animateSymbols() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      floatingSymbols.forEach(sym => {
+        ctx.save();
+        ctx.font = `${sym.fontSize}px Roboto, Arial, sans-serif`;
+        ctx.globalAlpha = sym.opacity;
+        ctx.translate(sym.x, sym.y);
+        ctx.rotate(sym.angle);
+        ctx.fillStyle = sym.color;
+        ctx.fillText(sym.text, 0, 0);
+        ctx.restore();
+        sym.y -= sym.speed;
+        sym.angle += sym.rotateSpeed;
+        sym.x += Math.sin(sym.y / 60) * 0.5;
+      });
+      ctx.globalAlpha = 1.0;
+      // Remove symbols that have floated off screen
+      floatingSymbols = floatingSymbols.filter(sym => sym.y + sym.fontSize > 0);
+      // Add new symbols if needed
+      if (floatingSymbols.length < 24) {
+        floatingSymbols.push(createSymbol());
+      }
+      requestAnimationFrame(animateSymbols);
+    }
+    // Initialize symbols
+    for (let i = 0; i < 24; i++) {
+      floatingSymbols.push(createSymbol());
+    }
+    animateSymbols();
+  </script>
+</body>
+</html>
